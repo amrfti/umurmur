@@ -1,0 +1,48 @@
+name: Fil-C
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  filc:
+    name: Build with Fil-C
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl \
+            git \
+            ca-certificates \
+            build-essential \
+            cmake \
+            libconfig-dev \
+            libprotobuf-c-dev \
+            libssl-dev
+
+      - name: Install Fil-C
+        run: |
+          curl -L \
+            https://github.com/pizlonator/fil-c/releases/download/v0.684/filc-0.684-linux-x86_64.tar.xz \
+            -o /tmp/filc.tar.xz
+
+          tar -xJf /tmp/filc.tar.xz -C "$HOME"
+
+          cd "$HOME/filc-0.684-linux-x86_64"
+          ./setup.sh
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="$HOME/filc-0.684-linux-x86_64/build/bin/clang" \
+            -DCMAKE_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
+
+      - name: Build
+        run: cmake --build build --parallel
